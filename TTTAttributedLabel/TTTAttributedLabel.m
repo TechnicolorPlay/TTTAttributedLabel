@@ -455,7 +455,7 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
 
     CGMutablePathRef path = CGPathCreateMutable();
     CGPathAddRect(path, NULL, textRect);
-    CTFrameRef frame = CTFramesetterCreateFrame(self.framesetter, CFRangeMake(0, [self.attributedText length]), path, NULL);
+    CTFrameRef frame = CTFramesetterCreateFrame(self.framesetter, CFRangeMake(0, (CFIndex)[self.attributedText length]), path, NULL);
     if (frame == NULL) {
         CFRelease(path);
         return NSNotFound;
