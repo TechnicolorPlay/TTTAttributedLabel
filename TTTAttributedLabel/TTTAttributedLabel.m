@@ -44,13 +44,18 @@ static inline CTTextAlignment CTTextAlignmentFromUITextAlignment(UITextAlignment
 
 static inline CTLineBreakMode CTLineBreakModeFromUILineBreakMode(UILineBreakMode lineBreakMode) {
 	switch (lineBreakMode) {
-		case UILineBreakModeWordWrap: return kCTLineBreakByWordWrapping;
-		case UILineBreakModeCharacterWrap: return kCTLineBreakByCharWrapping;
-		case UILineBreakModeClip: return kCTLineBreakByClipping;
-		case UILineBreakModeHeadTruncation: return kCTLineBreakByTruncatingHead;
-		case UILineBreakModeTailTruncation: return kCTLineBreakByTruncatingTail;
-		case UILineBreakModeMiddleTruncation: return kCTLineBreakByTruncatingMiddle;
-		default: return 0;
+		case UILineBreakModeWordWrap:
+            return kCTLineBreakByWordWrapping;
+		case UILineBreakModeCharacterWrap:
+            return kCTLineBreakByCharWrapping;
+		case UILineBreakModeClip:
+            return kCTLineBreakByClipping;
+		case UILineBreakModeHeadTruncation:
+            return kCTLineBreakByTruncatingHead;
+		case UILineBreakModeTailTruncation:
+            return kCTLineBreakByTruncatingTail;
+		case UILineBreakModeMiddleTruncation:
+            return kCTLineBreakByTruncatingMiddle;
 	}
 }
 
