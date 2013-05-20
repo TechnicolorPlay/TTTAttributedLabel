@@ -644,7 +644,7 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
     CFIndex lineIndex = 0;
     for (id line in lines) {
         CGFloat ascent = 0.0f, descent = 0.0f, leading = 0.0f;
-        CGFloat width = CTLineGetTypographicBounds((__bridge CTLineRef)line, &ascent, &descent, &leading) ;
+        CGFloat width = (CGFloat)CTLineGetTypographicBounds((__bridge CTLineRef)line, &ascent, &descent, &leading) ;
         CGRect lineBounds = CGRectMake(0.0f, 0.0f, width, ascent + descent + leading) ;
         lineBounds.origin.x = origins[lineIndex].x;
         lineBounds.origin.y = origins[lineIndex].y;
@@ -661,7 +661,7 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
                 CGFloat runAscent = 0.0f;
                 CGFloat runDescent = 0.0f;
                 
-                runBounds.size.width = CTRunGetTypographicBounds((__bridge CTRunRef)glyphRun, CFRangeMake(0, 0), &runAscent, &runDescent, NULL);
+                runBounds.size.width = (CGFloat)CTRunGetTypographicBounds((__bridge CTRunRef)glyphRun, CFRangeMake(0, 0), &runAscent, &runDescent, NULL);
                 runBounds.size.height = runAscent + runDescent;
                 
                 CGFloat xOffset = CTLineGetOffsetForStringIndex((__bridge CTLineRef)line, CTRunGetStringRange((__bridge CTRunRef)glyphRun).location, NULL);
@@ -707,7 +707,7 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
     CFIndex lineIndex = 0;
     for (id line in lines) {        
         CGFloat ascent = 0.0f, descent = 0.0f, leading = 0.0f;
-        CGFloat width = CTLineGetTypographicBounds((__bridge CTLineRef)line, &ascent, &descent, &leading) ;
+        CGFloat width = (CGFloat)CTLineGetTypographicBounds((__bridge CTLineRef)line, &ascent, &descent, &leading) ;
         CGRect lineBounds = CGRectMake(0.0f, 0.0f, width, ascent + descent + leading) ;
         lineBounds.origin.x = origins[lineIndex].x;
         lineBounds.origin.y = origins[lineIndex].y;
@@ -722,7 +722,7 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
                 CGFloat runAscent = 0.0f;
                 CGFloat runDescent = 0.0f;
                 
-                runBounds.size.width = CTRunGetTypographicBounds((__bridge CTRunRef)glyphRun, CFRangeMake(0, 0), &runAscent, &runDescent, NULL);
+                runBounds.size.width = (CGFloat)CTRunGetTypographicBounds((__bridge CTRunRef)glyphRun, CFRangeMake(0, 0), &runAscent, &runDescent, NULL);
                 runBounds.size.height = runAscent + runDescent;
                 
                 CGFloat xOffset = CTLineGetOffsetForStringIndex((__bridge CTLineRef)line, CTRunGetStringRange((__bridge CTRunRef)glyphRun).location, NULL);
@@ -880,7 +880,7 @@ afterInheritingLabelAttributesAndConfiguringWithBlock:(NSMutableAttributedString
     textRect.size.height = fmaxf(self.font.pointSize * 2.0f, bounds.size.height);
 
     // Adjust the text to be in the center vertically, if the text size is smaller than bounds
-    CGSize textSize = CTFramesetterSuggestFrameSizeWithConstraints(self.framesetter, CFRangeMake(0, [self.attributedText length]), NULL, textRect.size, NULL);
+    CGSize textSize = CTFramesetterSuggestFrameSizeWithConstraints(self.framesetter, CFRangeMake(0, (CFIndex)[self.attributedText length]), NULL, textRect.size, NULL);
     textSize = CGSizeMake(ceilf(textSize.width), ceilf(textSize.height)); // Fix for iOS 4, CTFramesetterSuggestFrameSizeWithConstraints sometimes returns fractional sizes
     
     if (textSize.height < textRect.size.height) {
@@ -936,7 +936,7 @@ afterInheritingLabelAttributesAndConfiguringWithBlock:(NSMutableAttributedString
         CGContextTranslateCTM(c, 0.0f, rect.size.height);
         CGContextScaleCTM(c, 1.0f, -1.0f);
         
-        CFRange textRange = CFRangeMake(0, [self.attributedText length]);
+        CFRange textRange = CFRangeMake(0, (CFIndex)[self.attributedText length]);
 
         // First, get the text rect (which takes vertical centering into account)
         CGRect textRect = [self textRectForBounds:rect limitedToNumberOfLines:self.numberOfLines];
@@ -979,7 +979,7 @@ afterInheritingLabelAttributesAndConfiguringWithBlock:(NSMutableAttributedString
         return [super sizeThatFits:size];
     }
     
-    CFRange rangeToSize = CFRangeMake(0, [self.attributedText length]);
+    CFRange rangeToSize = CFRangeMake(0, (CFIndex)[self.attributedText length]);
     CGSize constraints = CGSizeMake(size.width, CGFLOAT_MAX);
     
     if (self.numberOfLines == 1) {
@@ -1104,7 +1104,7 @@ afterInheritingLabelAttributesAndConfiguringWithBlock:(NSMutableAttributedString
 - (void)encodeWithCoder:(NSCoder *)coder {
     [super encodeWithCoder:coder];
 
-    [coder encodeInteger:self.dataDetectorTypes forKey:@"dataDetectorTypes"];
+    [coder encodeInteger:(NSInteger)self.dataDetectorTypes forKey:@"dataDetectorTypes"];
     [coder encodeObject:self.links forKey:@"links"];
     if ([NSMutableParagraphStyle class]) {
         [coder encodeObject:self.linkAttributes forKey:@"linkAttributes"];
