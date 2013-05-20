@@ -469,7 +469,7 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
         return NSNotFound;
     }
     
-    NSUInteger idx = NSNotFound;
+    CFIndex idx = NSNotFound;
 
     CGPoint lineOrigins[numberOfLines];
     CTFrameGetLineOrigins(frame, CFRangeMake(0, numberOfLines), lineOrigins);
@@ -503,7 +503,7 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
     CFRelease(frame);
     CFRelease(path);
         
-    return idx;
+    return (CFIndex)idx;
 }
 
 - (void)drawFramesetter:(CTFramesetterRef)framesetter
@@ -537,7 +537,7 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
             if (!(lastLineRange.length == 0 && lastLineRange.location == 0) && lastLineRange.location + lastLineRange.length < textRange.location + textRange.length) {
                 // Get correct truncationType and attribute position
                 CTLineTruncationType truncationType;
-                NSUInteger truncationAttributePosition = lastLineRange.location;
+                CFIndex truncationAttributePosition = lastLineRange.location;
                 UILineBreakMode lineBreakMode = self.lineBreakMode;
                 
                 // Multiple lines, only use UILineBreakModeTailTruncation
@@ -561,7 +561,7 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
                 }
                 
                 // Get the attributes and use them to create the truncation token string
-                NSDictionary *tokenAttributes = [attributedString attributesAtIndex:truncationAttributePosition effectiveRange:NULL];
+                NSDictionary *tokenAttributes = [attributedString attributesAtIndex:(NSUInteger)truncationAttributePosition effectiveRange:NULL];
                 NSString *truncationTokenString = self.truncationTokenString;
                 if (!truncationTokenString) {
                     truncationTokenString = @"\u2026"; // Unicode Character 'HORIZONTAL ELLIPSIS' (U+2026)
@@ -573,12 +573,12 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
                 // Append truncationToken to the string
                 // because if string isn't too long, CT wont add the truncationToken on it's own
                 // There is no change of a double truncationToken because CT only add the token if it removes characters (and the one we add will go first)
-                NSMutableAttributedString *truncationString = [[attributedString attributedSubstringFromRange:NSMakeRange(lastLineRange.location, lastLineRange.length)] mutableCopy];
+                NSMutableAttributedString *truncationString = [[attributedString attributedSubstringFromRange:NSMakeRange((NSUInteger)lastLineRange.location, (NSUInteger)lastLineRange.length)] mutableCopy];
                 if (lastLineRange.length > 0) {
                     // Remove any newline at the end (we don't want newline space between the text and the truncation token). There can only be one, because the second would be on the next line.
-                    unichar lastCharacter = [[truncationString string] characterAtIndex:lastLineRange.length - 1];
+                    unichar lastCharacter = [[truncationString string] characterAtIndex:(NSUInteger)lastLineRange.length - 1];
                     if ([[NSCharacterSet newlineCharacterSet] characterIsMember:lastCharacter]) {
-                        [truncationString deleteCharactersInRange:NSMakeRange(lastLineRange.length - 1, 1)];
+                        [truncationString deleteCharactersInRange:NSMakeRange((NSUInteger)lastLineRange.length - 1, 1)];
                     }
                 }
                 [truncationString appendAttributedString:attributedTokenString];
@@ -605,7 +605,7 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
                         break;
                 }
 
-                CGFloat penOffset = CTLineGetPenOffsetForFlush(truncatedLine, flushFactor, rect.size.width);
+                CGFloat penOffset = (CGFloat)CTLineGetPenOffsetForFlush(truncatedLine, flushFactor, rect.size.width);
                 CGContextSetTextPosition(c, penOffset, lineOrigin.y);
                 
                 CTLineDraw(truncatedLine, c);
