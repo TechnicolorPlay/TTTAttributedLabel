@@ -480,9 +480,9 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
         
         // Get bounding information of line
         CGFloat ascent = 0.0f, descent = 0.0f, leading = 0.0f;
-        CGFloat width = CTLineGetTypographicBounds(line, &ascent, &descent, &leading);
-        CGFloat yMin = floor(lineOrigin.y - descent);
-        CGFloat yMax = ceil(lineOrigin.y + ascent);
+        CGFloat width = (CGFloat)CTLineGetTypographicBounds(line, &ascent, &descent, &leading);
+        CGFloat yMin = floorf(lineOrigin.y - descent);
+        CGFloat yMax = ceilf(lineOrigin.y + ascent);
         
         // Check if we've already passed the line
         if (p.y > yMax) {
