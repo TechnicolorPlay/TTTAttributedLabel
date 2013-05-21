@@ -296,14 +296,6 @@ afterInheritingLabelAttributesAndConfiguringWithBlock:(NSMutableAttributedString
              duration:(NSTimeInterval)duration
             withRange:(NSRange)range;
 
-/**
- Returns a suggested rect for the constrained size
- 
- @param attributedString the attributed text to check
- @param size the size constrain to
- */
-- (CGSize)suggestedSizeOfAttributedText:(NSAttributedString *)attributedString forSize:(CGSize)size;
-
 @end
 
 /**

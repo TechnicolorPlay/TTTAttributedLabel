@@ -662,12 +662,12 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
                 CGFloat runDescent = 0.0f;
                 
                 runBounds.size.width = (CGFloat)CTRunGetTypographicBounds((__bridge CTRunRef)glyphRun, CFRangeMake(0, 0), &runAscent, &runDescent, NULL);
-                runBounds.size.height = runAscent + runDescent;
+                runBounds.size.height = runAscent - runDescent;//runAscent + runDescent;
                 
                 CGFloat xOffset = CTLineGetOffsetForStringIndex((__bridge CTLineRef)line, CTRunGetStringRange((__bridge CTRunRef)glyphRun).location, NULL);
                 runBounds.origin.x = origins[lineIndex].x + rect.origin.x + xOffset;
                 runBounds.origin.y = origins[lineIndex].y + rect.origin.y + yOffset;
-                runBounds.origin.y -= runDescent;
+//                runBounds.origin.y -= runDescent;
                 
                 // Don't draw higlightedLinkBackground too far to the right
                 if (CGRectGetWidth(runBounds) > CGRectGetWidth(lineBounds)) {
@@ -974,97 +974,39 @@ afterInheritingLabelAttributesAndConfiguringWithBlock:(NSMutableAttributedString
 
 #pragma mark - UIView
 
-//- (CGSize)sizeThatFits:(CGSize)size {
-//    if (!self.attributedText) {
-//        return [super sizeThatFits:size];
-//    }
-//    
-//    CFRange rangeToSize = CFRangeMake(0, (CFIndex)[self.attributedText length]);
-//    CGSize constraints = CGSizeMake(size.width, CGFLOAT_MAX);
-//    
-//    if (self.numberOfLines == 1) {
-//        // If there is one line, the size that fits is the full width of the line
-//        constraints = CGSizeMake(CGFLOAT_MAX, CGFLOAT_MAX);
-//    } else if (self.numberOfLines > 0) {
-//        // If the line count of the label more than 1, limit the range to size to the number of lines that have been set
-//        CGMutablePathRef path = CGPathCreateMutable();
-//        CGPathAddRect(path, NULL, CGRectMake(0.0f, 0.0f, constraints.width, CGFLOAT_MAX));
-//        CTFrameRef frame = CTFramesetterCreateFrame(self.framesetter, CFRangeMake(0, 0), path, NULL);
-//        CFArrayRef lines = CTFrameGetLines(frame);
-//        
-//        if (CFArrayGetCount(lines) > 0) {
-//            NSInteger lastVisibleLineIndex = MIN(self.numberOfLines, CFArrayGetCount(lines)) - 1;
-//            CTLineRef lastVisibleLine = CFArrayGetValueAtIndex(lines, lastVisibleLineIndex);
-//            
-//            CFRange rangeToLayout = CTLineGetStringRange(lastVisibleLine);
-//            rangeToSize = CFRangeMake(0, rangeToLayout.location + rangeToLayout.length);
-//        }
-//        
-//        CFRelease(frame);
-//        CFRelease(path);
-//    }
-//    
-//    CGSize suggestedSize = CTFramesetterSuggestFrameSizeWithConstraints(self.framesetter, rangeToSize, NULL, constraints, NULL);
-//    
-//    return CGSizeMake(ceilf(suggestedSize.width + 5), ceilf(suggestedSize.height + 5));
-//}
-
-- (CGSize)suggestedSizeOfAttributedText:(NSAttributedString *)attributedString forSize:(CGSize)size
-{
-    CGSize suggestedSize = CGSizeZero;
-
-	if(self.framesetter)
-    {
-		if (size.width < 1)
-        {
-            size.width = 10000;
-        }
-		
-        if (size.height < 1)
-        {
-            size.height = 10000;
-        }
-        
-		suggestedSize = CTFramesetterSuggestFrameSizeWithConstraints(self.framesetter, CFRangeMake(0, CFAttributedStringGetLength((__bridge CFAttributedStringRef)(attributedString))), NULL, size, NULL);
-		suggestedSize.width = ceilf(suggestedSize.width);
-		suggestedSize.height = ceilf(suggestedSize.height);
-	}
-    else
-    {
-		suggestedSize = size;
-	}
-    
-	return suggestedSize;
-}
-
 - (CGSize)sizeThatFits:(CGSize)size {
-    if (!self.attributedText)
-    {
+    if (!self.attributedText) {
         return [super sizeThatFits:size];
     }
     
-    NSUInteger length = 0;
-    if ([self.text respondsToSelector:@selector(length)])
-    {
-        length = [self.text length];
+    CFRange rangeToSize = CFRangeMake(0, (CFIndex)[self.attributedText length]);
+    CGSize constraints = CGSizeMake(size.width, CGFLOAT_MAX);
+    
+    if (self.numberOfLines == 1) {
+        // If there is one line, the size that fits is the full width of the line
+        constraints = CGSizeMake(CGFLOAT_MAX, CGFLOAT_MAX);
+    } else if (self.numberOfLines > 0) {
+        // If the line count of the label more than 1, limit the range to size to the number of lines that have been set
+        CGMutablePathRef path = CGPathCreateMutable();
+        CGPathAddRect(path, NULL, CGRectMake(0.0f, 0.0f, constraints.width, CGFLOAT_MAX));
+        CTFrameRef frame = CTFramesetterCreateFrame(self.framesetter, CFRangeMake(0, 0), path, NULL);
+        CFArrayRef lines = CTFrameGetLines(frame);
+        
+        if (CFArrayGetCount(lines) > 0) {
+            NSInteger lastVisibleLineIndex = MIN(self.numberOfLines, CFArrayGetCount(lines)) - 1;
+            CTLineRef lastVisibleLine = CFArrayGetValueAtIndex(lines, lastVisibleLineIndex);
+            
+            CFRange rangeToLayout = CTLineGetStringRange(lastVisibleLine);
+            rangeToSize = CFRangeMake(0, rangeToLayout.location + rangeToLayout.length);
+        }
+        
+        CFRelease(frame);
+        CFRelease(path);
     }
     
-	if(!self.text || self.text == 0)
-    {
-		return CGSizeZero;
-	}
-	
-    NSAttributedString *attrString = nil;
-    if ([self.text isKindOfClass:[NSAttributedString class]])
-    {
-        attrString = self.text;
-    }
-    else
-    {
-        attrString = [[NSAttributedString alloc] initWithString:self.text];
-    }
+    CGSize suggestedSize = CTFramesetterSuggestFrameSizeWithConstraints(self.framesetter, rangeToSize, NULL, constraints, NULL);
     
-	return [self suggestedSizeOfAttributedText:attrString forSize:size];
+    return CGSizeMake(ceilf(suggestedSize.width + 1), ceilf(suggestedSize.height + 5));
 }
 
 - (CGSize)intrinsicContentSize {
