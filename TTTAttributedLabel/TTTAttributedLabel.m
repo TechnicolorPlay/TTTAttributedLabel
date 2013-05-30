@@ -203,6 +203,8 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
 @property (readwrite, nonatomic, strong) NSArray *links;
 @property (readwrite, nonatomic, strong) NSTextCheckingResult *activeLink;
 
+@property (readwrite, nonatomic, strong) NSMutableDictionary *linkRects;
+
 - (void)commonInit;
 - (void)setNeedsFramesetter;
 - (void)addLinksWithTextCheckingResults:(NSArray *)results
@@ -364,14 +366,14 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
 - (void)addLinkWithTextCheckingResult:(NSTextCheckingResult *)result
                            attributes:(NSDictionary *)attributes
 {
-    [self addLinksWithTextCheckingResults:[NSArray arrayWithObject:result] attributes:attributes];
+    [self addLinksWithTextCheckingResults:@[result] attributes:attributes];
 }
 
 - (void)addLinksWithTextCheckingResults:(NSArray *)results
                              attributes:(NSDictionary *)attributes
 {
     self.links = [self.links arrayByAddingObjectsFromArray:results];
-
+    
     if (attributes) {
         NSMutableAttributedString *mutableAttributedString = [self.attributedText mutableCopy];
         for (NSTextCheckingResult *result in results) {
@@ -420,7 +422,8 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
 
 #pragma mark -
 
-- (NSTextCheckingResult *)linkAtCharacterIndex:(CFIndex)idx {
+- (NSTextCheckingResult *)linkAtCharacterIndex:(CFIndex)idx
+{
     NSEnumerator *enumerator = [self.links reverseObjectEnumerator];
     NSTextCheckingResult *result = nil;
     while ((result = [enumerator nextObject])) {
@@ -432,13 +435,36 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
     return nil;
 }
 
-- (NSTextCheckingResult *)linkAtPoint:(CGPoint)p {
+- (NSTextCheckingResult *)linkAtPoint:(CGPoint)p
+{
+    NSTextCheckingResult* __block returnResult = nil;
+    [self.linkRects enumerateKeysAndObjectsUsingBlock:^(NSNumber *characterIndex, NSString *rectAsString, BOOL *stop) {
+        CGRect characterRect = CGRectFromString(rectAsString);
+        if (CGRectContainsPoint(characterRect, p))
+        {
+            for (int i = 0; i < (NSInteger)self.links.count; ++i)
+            {
+                NSTextCheckingResult *result = [self.links objectAtIndex:(NSUInteger)i];
+                if (NSLocationInRange(characterIndex.unsignedIntegerValue, result.range))
+                {
+                    DLog(@"%c, %@, %@", [self.text characterAtIndex:characterIndex.unsignedIntegerValue], NSStringFromCGPoint(p), NSStringFromCGRect(characterRect));
+                    returnResult = result;
+                    *stop = YES;
+                    break;
+                }
+            }
+        }
+    }];
+    
+    return returnResult;
+    
     CFIndex idx = [self characterIndexAtPoint:p];
     
     return [self linkAtCharacterIndex:idx];
 }
 
-- (CFIndex)characterIndexAtPoint:(CGPoint)p {
+- (CFIndex)characterIndexAtPoint:(CGPoint)p
+{
     if (!CGRectContainsPoint(self.bounds, p)) {
         return NSNotFound;
     }
@@ -452,7 +478,8 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
     p = CGPointMake(p.x - textRect.origin.x, p.y - textRect.origin.y);
     // Convert tap coordinates (start at top left) to CT coordinates (start at bottom left)
     p = CGPointMake(p.x, textRect.size.height - p.y);
-
+    
+    
     CGMutablePathRef path = CGPathCreateMutable();
     CGPathAddRect(path, NULL, textRect);
     CTFrameRef frame = CTFramesetterCreateFrame(self.framesetter, CFRangeMake(0, (CFIndex)[self.attributedText length]), path, NULL);
@@ -504,6 +531,84 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
     CFRelease(path);
         
     return (CFIndex)idx;
+}
+
+- (void)generateRectsForCharactersInLinks
+{
+    self.backgroundColor = [UIColor blackColor];
+    
+    if (self.links.count == 0)
+        return;
+    
+    CGRect textRect = [self textRectForBounds:self.bounds limitedToNumberOfLines:self.numberOfLines];
+    
+    CGMutablePathRef path = CGPathCreateMutable();
+    CGPathAddRect(path, NULL, textRect);
+    CTFrameRef frame = CTFramesetterCreateFrame(self.framesetter, CFRangeMake(0, (CFIndex)[self.attributedText length]), path, NULL);
+    if (frame == NULL) {
+        CFRelease(path);
+        return;
+    }
+    
+    CFArrayRef lines = CTFrameGetLines(frame);
+    NSInteger numberOfLines = self.numberOfLines > 0 ? MIN(self.numberOfLines, CFArrayGetCount(lines)) : CFArrayGetCount(lines);
+    if (numberOfLines == 0) {
+        CFRelease(frame);
+        CFRelease(path);
+        return;
+    }
+    
+    CGPoint lineOrigins[numberOfLines];
+    CTFrameGetLineOrigins(frame, CFRangeMake(0, numberOfLines), lineOrigins);
+    
+    self.linkRects = [NSMutableDictionary dictionary];
+    
+    CFIndex runningCount = 0;
+    for (CFIndex lineIndex = 0; lineIndex < numberOfLines; lineIndex++)
+    {
+        CFIndex startingCount = runningCount;
+        CTLineRef line = CFArrayGetValueAtIndex(lines, lineIndex);
+        CFIndex glyphCount = CTLineGetGlyphCount(line);
+        runningCount += glyphCount;
+        
+        for (NSUInteger resultIndex = 0; resultIndex < self.links.count; ++resultIndex)
+        {
+            NSTextCheckingResult *result = [self.links objectAtIndex:resultIndex];
+            NSRange range = result.range;
+            
+            if (range.location > (NSUInteger)startingCount || range.location + range.length < (NSUInteger)runningCount)
+            {
+                CGFloat ascent = 0.0f, descent = 0.0f, leading = 0.0f;
+                CGFloat width = (CGFloat)CTLineGetTypographicBounds(line, &ascent, &descent, &leading);
+                CGPoint lineOrigin = lineOrigins[lineIndex];
+                
+                NSUInteger start = MAX(range.location, (NSUInteger)startingCount);
+                NSUInteger end = MIN(range.location + range.length, (NSUInteger)runningCount);
+                
+                for (NSUInteger i = start; i < end; ++i)
+                {
+                    CGFloat xOffset = CTLineGetOffsetForStringIndex(line, (CFIndex)i, NULL);
+                    CGFloat charWidth = 0;
+                    
+                    if (i + 1 < (NSUInteger)runningCount)
+                    {
+                        charWidth = CTLineGetOffsetForStringIndex(line, (CFIndex)(i+1), NULL) - xOffset;
+                    }
+                    else
+                    {
+                        charWidth = width - xOffset;
+                    }
+                    
+                    CGRect charRect = CGRectMake(lineOrigin.x + xOffset, self.bounds.size.height - (lineOrigin.y - descent + ascent + leading), charWidth, ascent + descent + leading);
+                    
+                    [self.linkRects setObject:NSStringFromCGRect(charRect) forKey:@(i)];
+                }
+            }
+        }
+    }
+    
+    CFRelease(frame);
+    CFRelease(path);
 }
 
 - (void)drawFramesetter:(CTFramesetterRef)framesetter
@@ -1018,6 +1123,8 @@ afterInheritingLabelAttributesAndConfiguringWithBlock:(NSMutableAttributedString
 - (void)touchesBegan:(NSSet *)touches
            withEvent:(UIEvent *)event
 {
+    [self generateRectsForCharactersInLinks];
+    
     UITouch *touch = [touches anyObject];
     
     self.activeLink = [self linkAtPoint:[touch locationInView:self]];
