@@ -447,7 +447,6 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
                 NSTextCheckingResult *result = [self.links objectAtIndex:(NSUInteger)i];
                 if (NSLocationInRange(characterIndex.unsignedIntegerValue, result.range))
                 {
-                    DLog(@"%c, %@, %@", [self.text characterAtIndex:characterIndex.unsignedIntegerValue], NSStringFromCGPoint(p), NSStringFromCGRect(characterRect));
                     returnResult = result;
                     *stop = YES;
                     break;
@@ -457,85 +456,11 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
     }];
     
     return returnResult;
-    
-    CFIndex idx = [self characterIndexAtPoint:p];
-    
-    return [self linkAtCharacterIndex:idx];
-}
-
-- (CFIndex)characterIndexAtPoint:(CGPoint)p
-{
-    if (!CGRectContainsPoint(self.bounds, p)) {
-        return NSNotFound;
-    }
-    
-    CGRect textRect = [self textRectForBounds:self.bounds limitedToNumberOfLines:self.numberOfLines];
-    if (!CGRectContainsPoint(textRect, p)) {
-        return NSNotFound;
-    }
-    
-    // Offset tap coordinates by textRect origin to make them relative to the origin of frame
-    p = CGPointMake(p.x - textRect.origin.x, p.y - textRect.origin.y);
-    // Convert tap coordinates (start at top left) to CT coordinates (start at bottom left)
-    p = CGPointMake(p.x, textRect.size.height - p.y);
-    
-    
-    CGMutablePathRef path = CGPathCreateMutable();
-    CGPathAddRect(path, NULL, textRect);
-    CTFrameRef frame = CTFramesetterCreateFrame(self.framesetter, CFRangeMake(0, (CFIndex)[self.attributedText length]), path, NULL);
-    if (frame == NULL) {
-        CFRelease(path);
-        return NSNotFound;
-    }
-
-    CFArrayRef lines = CTFrameGetLines(frame);
-    NSInteger numberOfLines = self.numberOfLines > 0 ? MIN(self.numberOfLines, CFArrayGetCount(lines)) : CFArrayGetCount(lines);
-    if (numberOfLines == 0) {
-        CFRelease(frame);
-        CFRelease(path);
-        return NSNotFound;
-    }
-    
-    CFIndex idx = NSNotFound;
-
-    CGPoint lineOrigins[numberOfLines];
-    CTFrameGetLineOrigins(frame, CFRangeMake(0, numberOfLines), lineOrigins);
-
-    for (CFIndex lineIndex = 0; lineIndex < numberOfLines; lineIndex++) {
-        CGPoint lineOrigin = lineOrigins[lineIndex];
-        CTLineRef line = CFArrayGetValueAtIndex(lines, lineIndex);
-        
-        // Get bounding information of line
-        CGFloat ascent = 0.0f, descent = 0.0f, leading = 0.0f;
-        CGFloat width = (CGFloat)CTLineGetTypographicBounds(line, &ascent, &descent, &leading);
-        CGFloat yMin = floorf(lineOrigin.y - descent);
-        CGFloat yMax = ceilf(lineOrigin.y + ascent);
-        
-        // Check if we've already passed the line
-        if (p.y > yMax) {
-            break;
-        }
-        // Check if the point is within this line vertically
-        if (p.y >= yMin) {
-            // Check if the point is within this line horizontally
-            if (p.x >= lineOrigin.x && p.x <= lineOrigin.x + width) {
-                // Convert CT coordinates to line-relative coordinates
-                CGPoint relativePoint = CGPointMake(p.x - lineOrigin.x, p.y - lineOrigin.y);
-                idx = CTLineGetStringIndexForPosition(line, relativePoint);
-                break;
-            }
-        }
-    }
-    
-    CFRelease(frame);
-    CFRelease(path);
-        
-    return (CFIndex)idx;
 }
 
 - (void)generateRectsForCharactersInLinks
 {
-    self.backgroundColor = [UIColor blackColor];
+    DLog();
     
     if (self.links.count == 0)
         return;
@@ -609,6 +534,8 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
     
     CFRelease(frame);
     CFRelease(path);
+    
+    DLog();
 }
 
 - (void)drawFramesetter:(CTFramesetterRef)framesetter
