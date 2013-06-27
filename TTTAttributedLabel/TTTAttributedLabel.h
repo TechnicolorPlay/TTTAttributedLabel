@@ -192,6 +192,14 @@ extern NSString * const kTTTBackgroundCornerRadiusAttributeName;
  */
 @property (nonatomic, strong) NSString *truncationTokenString;
 
+
+/**
+ 
+ The padding to apply to the hit area on links.
+ 
+ */
+@property (nonatomic, assign) UIEdgeInsets linkPadding;
+
 ///----------------------------------
 /// @name Setting the Text Attributes
 ///----------------------------------

@@ -20,6 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#import <QuartzCore/QuartzCore.h>
+
 #import "TTTAttributedLabel.h"
 
 #define kTTTLineBreakWordWrapTextWidthScalingFactor (M_PI / M_E)
@@ -250,6 +252,7 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
 @synthesize verticalAlignment = _verticalAlignment;
 @synthesize truncationTokenString = _truncationTokenString;
 @synthesize activeLink = _activeLink;
+@synthesize linkPadding = _linkPadding;
 
 - (id)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
@@ -317,6 +320,8 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
     }
     
     _attributedText = [text copy];
+
+    self.linkRects = nil;
     
     [self setNeedsFramesetter];
 }
@@ -324,7 +329,6 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
 - (void)setNeedsFramesetter {
     // Reset the rendered attributed text so it has a chance to regenerate
     self.renderedAttributedText = nil;
-
     _needsFramesetter = YES;
 }
 
@@ -460,15 +464,17 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
 
 - (void)generateRectsForCharactersInLinks
 {
-    DLog();
-    
     if (self.links.count == 0)
+        return;
+    
+    if (self.linkRects)
         return;
     
     CGRect textRect = [self textRectForBounds:self.bounds limitedToNumberOfLines:self.numberOfLines];
     
     CGMutablePathRef path = CGPathCreateMutable();
     CGPathAddRect(path, NULL, textRect);
+    
     CTFrameRef frame = CTFramesetterCreateFrame(self.framesetter, CFRangeMake(0, (CFIndex)[self.attributedText length]), path, NULL);
     if (frame == NULL) {
         CFRelease(path);
@@ -486,6 +492,8 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
     CGPoint lineOrigins[numberOfLines];
     CTFrameGetLineOrigins(frame, CFRangeMake(0, numberOfLines), lineOrigins);
     
+    CGFloat heightDiff = textRect.size.height - self.frame.size.height;
+    
     self.linkRects = [NSMutableDictionary dictionary];
     
     CFIndex runningCount = 0;
@@ -494,6 +502,7 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
         CFIndex startingCount = runningCount;
         CTLineRef line = CFArrayGetValueAtIndex(lines, lineIndex);
         CFIndex glyphCount = CTLineGetGlyphCount(line);
+        
         runningCount += glyphCount;
         
         for (NSUInteger resultIndex = 0; resultIndex < self.links.count; ++resultIndex)
@@ -501,7 +510,7 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
             NSTextCheckingResult *result = [self.links objectAtIndex:resultIndex];
             NSRange range = result.range;
             
-            if (range.location > (NSUInteger)startingCount || range.location + range.length < (NSUInteger)runningCount)
+            if (range.location >= (NSUInteger)startingCount || range.location + range.length <= (NSUInteger)runningCount)
             {
                 CGFloat ascent = 0.0f, descent = 0.0f, leading = 0.0f;
                 CGFloat width = (CGFloat)CTLineGetTypographicBounds(line, &ascent, &descent, &leading);
@@ -524,18 +533,18 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
                         charWidth = width - xOffset;
                     }
                     
-                    CGRect charRect = CGRectMake(lineOrigin.x + xOffset, self.bounds.size.height - (lineOrigin.y - descent + ascent + leading), charWidth, ascent + descent + leading);
+                    CGFloat yOffset = (self.bounds.size.height - lineOrigin.y + textRect.origin.y + heightDiff) - ascent - leading;
+                    
+                    CGRect charRect = CGRectMake(lineOrigin.x + xOffset - self.linkPadding.left, yOffset - self.linkPadding.top, charWidth + self.linkPadding.left + self.linkPadding.right, ascent + descent + leading + self.linkPadding.top + self.linkPadding.bottom);
                     
                     [self.linkRects setObject:NSStringFromCGRect(charRect) forKey:@(i)];
                 }
             }
+            
         }
     }
-    
     CFRelease(frame);
     CFRelease(path);
-    
-    DLog();
 }
 
 - (void)drawFramesetter:(CTFramesetterRef)framesetter
@@ -972,7 +981,8 @@ afterInheritingLabelAttributesAndConfiguringWithBlock:(NSMutableAttributedString
 
         // First, get the text rect (which takes vertical centering into account)
         CGRect textRect = [self textRectForBounds:rect limitedToNumberOfLines:self.numberOfLines];
-
+        //textRect.origin.y = 0;
+        
         // CoreText draws it's text aligned to the bottom, so we move the CTM here to take our vertical offsets into account
         CGContextTranslateCTM(c, rect.origin.x, rect.size.height - textRect.origin.y - textRect.size.height);
 
@@ -1006,7 +1016,7 @@ afterInheritingLabelAttributesAndConfiguringWithBlock:(NSMutableAttributedString
 
 #pragma mark - UIView
 
-- (CGSize)sizeThatFits:(CGSize)size {
+- (CGSize)sizeThatFits:(CGSize)size {    
     if (!self.attributedText) {
         return [super sizeThatFits:size];
     }
@@ -1228,6 +1238,28 @@ afterInheritingLabelAttributesAndConfiguringWithBlock:(NSMutableAttributedString
     }
 
     return self;
+}
+
+- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
+    if(UIEdgeInsetsEqualToEdgeInsets(self.linkPadding, UIEdgeInsetsZero) || !self.enabled || self.hidden) {
+        return [super pointInside:point withEvent:event];
+    }
+    
+    [self generateRectsForCharactersInLinks];
+    
+    __block BOOL returnResult = NO;
+    [self.linkRects enumerateKeysAndObjectsUsingBlock:^(NSNumber *characterIndex, NSString *rectAsString, BOOL *stop) {
+        CGRect characterRect = CGRectFromString(rectAsString);
+        if (CGRectContainsPoint(characterRect, point))
+        {
+            returnResult = YES;
+            *stop = YES;
+        }
+    }];
+    
+    if(returnResult) return YES;
+
+    return [super pointInside:point withEvent:event];
 }
 
 @end
