@@ -213,7 +213,6 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
                              attributes:(NSDictionary *)attributes;
 - (NSTextCheckingResult *)linkAtCharacterIndex:(CFIndex)idx;
 - (NSTextCheckingResult *)linkAtPoint:(CGPoint)p;
-- (CFIndex)characterIndexAtPoint:(CGPoint)p;
 - (void)drawFramesetter:(CTFramesetterRef)framesetter
        attributedString:(NSAttributedString *)attributedString
               textRange:(CFRange)textRange
