@@ -879,6 +879,12 @@ afterInheritingLabelAttributesAndConfiguringWithBlock:(NSMutableAttributedString
     }
 }
 
+- (void)resetLinks
+{
+    self.activeLink = nil;
+    self.links = [NSArray array];
+}
+
 #pragma mark - UILabel
 
 - (void)setHighlighted:(BOOL)highlighted {

@@ -224,6 +224,11 @@ extern NSString * const kTTTBackgroundCornerRadiusAttributeName;
 - (void)setText:(id)text
 afterInheritingLabelAttributesAndConfiguringWithBlock:(NSMutableAttributedString *(^)(NSMutableAttributedString *mutableAttributedString))block;
 
+/**
+ Reset link
+*/
+- (void)resetLinks;
+
 ///----------------------------------
 /// @name Accessing the Text Attributes
 ///----------------------------------
