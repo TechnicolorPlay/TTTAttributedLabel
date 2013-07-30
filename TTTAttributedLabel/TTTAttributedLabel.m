@@ -718,12 +718,12 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
                 CGFloat runDescent = 0.0f;
                 
                 runBounds.size.width = (CGFloat)CTRunGetTypographicBounds((__bridge CTRunRef)glyphRun, CFRangeMake(0, 0), &runAscent, &runDescent, NULL);
-                runBounds.size.height = roundf(runAscent - runDescent);//runAscent + runDescent;
+                runBounds.size.height = roundf(runAscent);// + (runDescent * 0.65f));
                 
                 CGFloat xOffset = CTLineGetOffsetForStringIndex((__bridge CTLineRef)line, CTRunGetStringRange((__bridge CTRunRef)glyphRun).location, NULL);
                 runBounds.origin.x = origins[lineIndex].x + rect.origin.x + xOffset;
                 runBounds.origin.y = roundf(origins[lineIndex].y + rect.origin.y + yOffset);
-                //                runBounds.origin.y -= runDescent;
+                runBounds.origin.y = runBounds.origin.y - runDescent;
                 
                 // Don't draw higlightedLinkBackground too far to the right
                 if (CGRectGetWidth(runBounds) > CGRectGetWidth(lineBounds)) {
