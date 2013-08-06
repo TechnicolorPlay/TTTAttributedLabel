@@ -523,7 +523,7 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
             NSTextCheckingResult *result = [self.links objectAtIndex:resultIndex];
             NSRange range = result.range;
             
-            if (range.location >= (NSUInteger)startingCount || range.location + range.length <= (NSUInteger)runningCount)
+            if (range.location >= (NSUInteger)startingCount || ((range.location < (NSUInteger)startingCount) && (range.location + range.length > (NSUInteger)startingCount)))
             {
                 CGFloat ascent = 0.0f, descent = 0.0f, leading = 0.0f;
                 CGFloat width = (CGFloat)CTLineGetTypographicBounds(line, &ascent, &descent, &leading);
@@ -551,7 +551,6 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
                     
                     
                     CGRect charRect = CGRectMake(lineOrigin.x + xOffset - self.linkPadding.left, yOffset, charWidth + self.linkPadding.left + self.linkPadding.right, characterHeight);
-                    
                     [self.linkRects setObject:NSStringFromCGRect(charRect) forKey:@(i)];
                 }
             }
