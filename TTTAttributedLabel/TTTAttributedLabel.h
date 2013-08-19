@@ -200,6 +200,13 @@ extern NSString * const kTTTBackgroundCornerRadiusAttributeName;
  */
 @property (nonatomic, assign) UIEdgeInsets linkPadding;
 
+/**
+ 
+ The padding to apply to the hit area for gesture recognizers.
+ 
+ */
+@property (nonatomic, assign) UIEdgeInsets hitTestOutsets;
+
 ///----------------------------------
 /// @name Setting the Text Attributes
 ///----------------------------------
