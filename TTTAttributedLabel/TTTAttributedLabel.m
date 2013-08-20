@@ -252,6 +252,7 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
 @synthesize truncationTokenString = _truncationTokenString;
 @synthesize activeLink = _activeLink;
 @synthesize linkPadding = _linkPadding;
+@synthesize hitTestOutsets = _hitTestOutsets;
 
 - (id)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
@@ -1281,6 +1282,13 @@ afterInheritingLabelAttributesAndConfiguringWithBlock:(NSMutableAttributedString
     
     return [super pointInside:point withEvent:event];
 }
+
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    UIEdgeInsets hitTestOutsets = UIEdgeInsetsMake(-self.hitTestOutsets.top, -self.hitTestOutsets.left, -self.hitTestOutsets.bottom, -self.hitTestOutsets.right);
+    CGRect frame = UIEdgeInsetsInsetRect(self.bounds, hitTestOutsets);
+    return CGRectContainsPoint(frame, point) ? self : nil;
+}
+
 
 @end
 
