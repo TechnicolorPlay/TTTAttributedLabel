@@ -901,6 +901,28 @@ afterInheritingLabelAttributesAndConfiguringWithBlock:(NSMutableAttributedString
     self.links = [NSArray array];
 }
 
+- (BOOL)linkAtTouch:(UITouch *)touch
+{
+    if (self.links == 0)
+    {
+        return NO;
+    }
+    
+    if (self.linkRects.count == 0 && self.links > 0)
+    {
+        [self generateRectsForCharactersInLinks];
+    }
+    
+    CGPoint location = [touch locationInView:self];
+    NSTextCheckingResult *result = [self linkAtPoint:location];
+    if (result)
+    {
+        return YES;
+    }
+    
+    return NO;
+}
+
 #pragma mark - UILabel
 
 - (void)setHighlighted:(BOOL)highlighted {
@@ -1283,10 +1305,18 @@ afterInheritingLabelAttributesAndConfiguringWithBlock:(NSMutableAttributedString
     return [super pointInside:point withEvent:event];
 }
 
-- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
-    UIEdgeInsets hitTestOutsets = UIEdgeInsetsMake(-self.hitTestOutsets.top, -self.hitTestOutsets.left, -self.hitTestOutsets.bottom, -self.hitTestOutsets.right);
-    CGRect frame = UIEdgeInsetsInsetRect(self.bounds, hitTestOutsets);
-    return CGRectContainsPoint(frame, point) ? self : nil;
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event
+{
+    if (self.links.count == 0)
+    {
+        UIEdgeInsets hitTestOutsets = UIEdgeInsetsMake(-self.hitTestOutsets.top, -self.hitTestOutsets.left, -self.hitTestOutsets.bottom, -self.hitTestOutsets.right);
+        CGRect frame = UIEdgeInsetsInsetRect(self.bounds, hitTestOutsets);
+        return CGRectContainsPoint(frame, point) ? self : nil;
+    }
+    else
+    {
+        return [super hitTest:point withEvent:event];
+    }
 }
 
 

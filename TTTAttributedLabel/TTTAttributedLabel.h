@@ -236,6 +236,11 @@ afterInheritingLabelAttributesAndConfiguringWithBlock:(NSMutableAttributedString
 */
 - (void)resetLinks;
 
+/**
+ Return wether a link exists at a given touch
+ */
+- (BOOL)linkAtTouch:(UITouch *)touch;
+
 ///----------------------------------
 /// @name Accessing the Text Attributes
 ///----------------------------------
