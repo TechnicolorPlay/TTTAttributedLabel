@@ -35,28 +35,29 @@ NSString * const kTTTBackgroundStrokeColorAttributeName = @"TTTBackgroundStrokeC
 NSString * const kTTTBackgroundLineWidthAttributeName = @"TTTBackgroundLineWidth";
 NSString * const kTTTBackgroundCornerRadiusAttributeName = @"TTTBackgroundCornerRadius";
 
-static inline CTTextAlignment CTTextAlignmentFromUITextAlignment(UITextAlignment alignment) {
+static inline CTTextAlignment CTTextAlignmentFromUITextAlignment(NSTextAlignment alignment) {
 	switch (alignment) {
-		case UITextAlignmentLeft: return kCTLeftTextAlignment;
-		case UITextAlignmentCenter: return kCTCenterTextAlignment;
-		case UITextAlignmentRight: return kCTRightTextAlignment;
-		default: return kCTNaturalTextAlignment;
+		case NSTextAlignmentLeft: return kCTLeftTextAlignment;
+		case NSTextAlignmentCenter: return kCTCenterTextAlignment;
+		case NSTextAlignmentRight: return kCTRightTextAlignment;
+        case NSTextAlignmentJustified : return kCTTextAlignmentJustified;
+        case NSTextAlignmentNatural : return kCTTextAlignmentNatural;
 	}
 }
 
-static inline CTLineBreakMode CTLineBreakModeFromUILineBreakMode(UILineBreakMode lineBreakMode) {
+static inline CTLineBreakMode CTLineBreakModeFromUILineBreakMode(NSLineBreakMode lineBreakMode) {
 	switch (lineBreakMode) {
-		case UILineBreakModeWordWrap:
+		case NSLineBreakByWordWrapping:
             return kCTLineBreakByWordWrapping;
-		case UILineBreakModeCharacterWrap:
+		case NSLineBreakByCharWrapping:
             return kCTLineBreakByCharWrapping;
-		case UILineBreakModeClip:
+		case NSLineBreakByClipping:
             return kCTLineBreakByClipping;
-		case UILineBreakModeHeadTruncation:
+		case NSLineBreakByTruncatingHead:
             return kCTLineBreakByTruncatingHead;
-		case UILineBreakModeTailTruncation:
+		case NSLineBreakByTruncatingTail:
             return kCTLineBreakByTruncatingTail;
-		case UILineBreakModeMiddleTruncation:
+		case NSLineBreakByTruncatingMiddle:
             return kCTLineBreakByTruncatingMiddle;
 	}
 }
@@ -125,7 +126,7 @@ static inline NSDictionary * NSAttributedStringAttributesFromLabel(TTTAttributed
         
         CTLineBreakMode lineBreakMode;
         if (label.numberOfLines != 1) {
-            lineBreakMode = CTLineBreakModeFromUILineBreakMode(UILineBreakModeWordWrap);
+            lineBreakMode = CTLineBreakModeFromUILineBreakMode(NSLineBreakByWordWrapping);
         } else {
             lineBreakMode = CTLineBreakModeFromUILineBreakMode(label.lineBreakMode);
         }
@@ -290,7 +291,7 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
         [mutableLinkAttributes setObject:paragraphStyle forKey:(NSString *)kCTParagraphStyleAttributeName];
         [mutableActiveLinkAttributes setObject:paragraphStyle forKey:(NSString *)kCTParagraphStyleAttributeName];
     } else {
-        CTLineBreakMode lineBreakMode = CTLineBreakModeFromUILineBreakMode(UILineBreakModeWordWrap);
+        CTLineBreakMode lineBreakMode = CTLineBreakModeFromUILineBreakMode(NSLineBreakByWordWrapping);
         CTParagraphStyleSetting paragraphStyles[1] = {
             {.spec = kCTParagraphStyleSpecifierLineBreakMode, .valueSize = sizeof(CTLineBreakMode), .value = (const void *)&lineBreakMode}
         };
@@ -503,7 +504,7 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
         return;
     }
     
-    CGPoint lineOrigins[numberOfLines];
+    CGPoint *lineOrigins = (CGPoint *)malloc(sizeof(CGPoint) * (unsigned long)numberOfLines);
     CTFrameGetLineOrigins(frame, CFRangeMake(0, numberOfLines), lineOrigins);
     
     CGFloat heightDiff = textRect.size.height - self.frame.size.height;
@@ -560,6 +561,7 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
     }
     CFRelease(frame);
     CFRelease(path);
+    free(lineOrigins);
 }
 
 - (void)drawFramesetter:(CTFramesetterRef)framesetter
@@ -578,7 +580,7 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
     NSInteger numberOfLines = self.numberOfLines > 0 ? MIN(self.numberOfLines, CFArrayGetCount(lines)) : CFArrayGetCount(lines);
     BOOL truncateLastLine = (self.lineBreakMode == UILineBreakModeHeadTruncation || self.lineBreakMode == UILineBreakModeMiddleTruncation || self.lineBreakMode == UILineBreakModeTailTruncation);
  	
-    CGPoint lineOrigins[numberOfLines];
+    CGPoint *lineOrigins = (CGPoint *)malloc(sizeof(CGPoint) * (unsigned long)numberOfLines);
     CTFrameGetLineOrigins(frame, CFRangeMake(0, numberOfLines), lineOrigins);
     
     for (CFIndex lineIndex = 0; lineIndex < numberOfLines; lineIndex++) {
@@ -594,11 +596,11 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
                 // Get correct truncationType and attribute position
                 CTLineTruncationType truncationType;
                 CFIndex truncationAttributePosition = lastLineRange.location;
-                UILineBreakMode lineBreakMode = self.lineBreakMode;
+                NSLineBreakMode lineBreakMode = self.lineBreakMode;
                 
                 // Multiple lines, only use UILineBreakModeTailTruncation
                 if (numberOfLines != 1) {
-                    lineBreakMode = UILineBreakModeTailTruncation;
+                    lineBreakMode = NSLineBreakByTruncatingTail;
                 }
                 
                 switch (lineBreakMode) {
@@ -681,6 +683,7 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
     
     CFRelease(frame);
     CFRelease(path);
+    free(lineOrigins);
 }
 
 - (void)drawBackground:(CTFrameRef)frame
@@ -688,7 +691,7 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
                context:(CGContextRef)c
 {
     NSArray *lines = (__bridge NSArray *)CTFrameGetLines(frame);
-    CGPoint origins[[lines count]];
+    CGPoint *origins = (CGPoint *)malloc(sizeof(CGPoint) * lines.count);
     CTFrameGetLineOrigins(frame, CFRangeMake(0, 0), origins);
     
     // Compensate for y-offset of text rect from vertical positioning
@@ -750,6 +753,8 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
         
         lineIndex++;
     }
+    
+    free(origins);
 }
 
 - (void)drawStrike:(CTFrameRef)frame
@@ -757,7 +762,7 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
            context:(CGContextRef)c
 {
     NSArray *lines = (__bridge NSArray *)CTFrameGetLines(frame);
-    CGPoint origins[[lines count]];
+    CGPoint *origins = (CGPoint *)malloc(sizeof(CGPoint) * lines.count);
     CTFrameGetLineOrigins(frame, CFRangeMake(0, 0), origins);
     
     CFIndex lineIndex = 0;
@@ -826,6 +831,8 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
         
         lineIndex++;
     }
+    
+    free(origins);
 }
 
 #pragma mark - TTTAttributedLabel
@@ -842,7 +849,7 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
     self.links = [NSArray array];
     if (self.attributedText && self.dataDetectorTypes != UIDataDetectorTypeNone) {
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-            NSArray *results = [self.dataDetector matchesInString:[text performSelector:@selector(string)] options:0 range:NSMakeRange(0, [text length])];
+            NSArray *results = [self.dataDetector matchesInString:[text performSelector:@selector(string)] options:0 range:NSMakeRange(0, (NSUInteger)[text performSelector:@selector(length)])];
             if ([results count] > 0) {
                 dispatch_async(dispatch_get_main_queue(), ^{
                     if ([[self.attributedText string] isEqualToString:[text performSelector:@selector(string)]]) {
