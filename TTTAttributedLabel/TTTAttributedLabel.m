@@ -764,7 +764,10 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
     NSArray *lines = (__bridge NSArray *)CTFrameGetLines(frame);
     CGPoint *origins = (CGPoint *)malloc(sizeof(CGPoint) * lines.count);
     CTFrameGetLineOrigins(frame, CFRangeMake(0, 0), origins);
-    
+
+    // cache font
+	CTFontRef font = CTFontCreateWithName((__bridge CFStringRef)self.font.fontName, self.font.pointSize, NULL);
+
     CFIndex lineIndex = 0;
     for (id line in lines) {
         CGFloat ascent = 0.0f, descent = 0.0f, leading = 0.0f;
@@ -819,7 +822,6 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
                     CGContextSetGrayStrokeColor(c, 0.0f, 1.0);
                 }
                 
-                CTFontRef font = CTFontCreateWithName((__bridge CFStringRef)self.font.fontName, self.font.pointSize, NULL);
                 CGContextSetLineWidth(c, CTFontGetUnderlineThickness(font));
                 CGFloat y = roundf(runBounds.origin.y + runBounds.size.height / 2.0f);
                 CGContextMoveToPoint(c, runBounds.origin.x, y);
@@ -831,7 +833,7 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
         
         lineIndex++;
     }
-    
+    CFRelease(font);
     free(origins);
 }
 
