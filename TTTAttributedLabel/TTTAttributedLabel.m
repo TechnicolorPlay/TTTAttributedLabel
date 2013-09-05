@@ -690,6 +690,8 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
                 inRect:(CGRect)rect
                context:(CGContextRef)c
 {
+	NSAssert(c, @"Failure: no context");
+	
     NSArray *lines = (__bridge NSArray *)CTFrameGetLines(frame);
     CGPoint *origins = (CGPoint *)malloc(sizeof(CGPoint) * lines.count);
     CTFrameGetLineOrigins(frame, CFRangeMake(0, 0), origins);
@@ -761,6 +763,8 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
             inRect:(CGRect)rect
            context:(CGContextRef)c
 {
+	NSAssert(c, @"Failure: no context");
+	
     NSArray *lines = (__bridge NSArray *)CTFrameGetLines(frame);
     CGPoint *origins = (CGPoint *)malloc(sizeof(CGPoint) * lines.count);
     CTFrameGetLineOrigins(frame, CFRangeMake(0, 0), origins);
@@ -1022,6 +1026,7 @@ afterInheritingLabelAttributesAndConfiguringWithBlock:(NSMutableAttributedString
     }
     
     CGContextRef c = UIGraphicsGetCurrentContext();
+	NSAssert(c, @"Failure: no context");
     CGContextSaveGState(c); {
         CGContextSetTextMatrix(c, CGAffineTransformIdentity);
         
