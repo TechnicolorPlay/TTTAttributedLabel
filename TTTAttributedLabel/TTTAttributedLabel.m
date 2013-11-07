@@ -726,7 +726,7 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
                 CGFloat xOffset = CTLineGetOffsetForStringIndex((__bridge CTLineRef)line, CTRunGetStringRange((__bridge CTRunRef)glyphRun).location, NULL);
                 runBounds.origin.x = origins[lineIndex].x + rect.origin.x + xOffset;
                 runBounds.origin.y = roundf(origins[lineIndex].y + rect.origin.y + yOffset);
-                runBounds.origin.y = runBounds.origin.y - runDescent;
+                runBounds.origin.y = runBounds.origin.y - runDescent - self.fillColorYOffset;
                 
                 // Don't draw higlightedLinkBackground too far to the right
                 if (CGRectGetWidth(runBounds) > CGRectGetWidth(lineBounds)) {
