@@ -690,8 +690,6 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
                 inRect:(CGRect)rect
                context:(CGContextRef)c
 {
-	NSAssert(c, @"Failure: no context");
-	
     NSArray *lines = (__bridge NSArray *)CTFrameGetLines(frame);
     CGPoint *origins = (CGPoint *)malloc(sizeof(CGPoint) * lines.count);
     CTFrameGetLineOrigins(frame, CFRangeMake(0, 0), origins);
@@ -728,7 +726,7 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
                 CGFloat xOffset = CTLineGetOffsetForStringIndex((__bridge CTLineRef)line, CTRunGetStringRange((__bridge CTRunRef)glyphRun).location, NULL);
                 runBounds.origin.x = origins[lineIndex].x + rect.origin.x + xOffset;
                 runBounds.origin.y = roundf(origins[lineIndex].y + rect.origin.y + yOffset);
-                runBounds.origin.y = runBounds.origin.y - runDescent;
+                runBounds.origin.y = runBounds.origin.y - runDescent - self.fillColorYOffset;
                 
                 // Don't draw higlightedLinkBackground too far to the right
                 if (CGRectGetWidth(runBounds) > CGRectGetWidth(lineBounds)) {
@@ -763,8 +761,6 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
             inRect:(CGRect)rect
            context:(CGContextRef)c
 {
-	NSAssert(c, @"Failure: no context");
-	
     NSArray *lines = (__bridge NSArray *)CTFrameGetLines(frame);
     CGPoint *origins = (CGPoint *)malloc(sizeof(CGPoint) * lines.count);
     CTFrameGetLineOrigins(frame, CFRangeMake(0, 0), origins);
@@ -1026,7 +1022,6 @@ afterInheritingLabelAttributesAndConfiguringWithBlock:(NSMutableAttributedString
     }
     
     CGContextRef c = UIGraphicsGetCurrentContext();
-	NSAssert(c, @"Failure: no context");
     CGContextSaveGState(c); {
         CGContextSetTextMatrix(c, CGAffineTransformIdentity);
         

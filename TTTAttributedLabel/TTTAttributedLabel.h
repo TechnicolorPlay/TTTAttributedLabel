@@ -207,6 +207,8 @@ extern NSString * const kTTTBackgroundCornerRadiusAttributeName;
  */
 @property (nonatomic, assign) UIEdgeInsets hitTestOutsets;
 
+@property (nonatomic, assign) CGFloat fillColorYOffset;
+
 ///----------------------------------
 /// @name Setting the Text Attributes
 ///----------------------------------
