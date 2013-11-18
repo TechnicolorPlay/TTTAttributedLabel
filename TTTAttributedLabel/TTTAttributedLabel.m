@@ -325,6 +325,7 @@ static inline NSAttributedString * NSAttributedStringBySettingColorFromContext(N
     self.linkRects = nil;
     
     [self setNeedsFramesetter];
+    [self setNeedsDisplay];
 }
 
 - (void)setNeedsFramesetter {
