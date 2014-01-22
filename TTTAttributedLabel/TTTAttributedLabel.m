@@ -1206,13 +1206,13 @@ afterInheritingLabelAttributesAndConfiguringWithBlock:(NSMutableAttributedString
         [coder encodeObject:self.linkAttributes forKey:@"linkAttributes"];
         [coder encodeObject:self.activeLinkAttributes forKey:@"activeLinkAttributes"];
     }
-    [coder encodeFloat:self.shadowRadius forKey:@"shadowRadius"];
-    [coder encodeFloat:self.highlightedShadowRadius forKey:@"highlightedShadowRadius"];
+    [coder encodeFloat:(float)self.shadowRadius forKey:@"shadowRadius"];
+    [coder encodeFloat:(float)self.highlightedShadowRadius forKey:@"highlightedShadowRadius"];
     [coder encodeCGSize:self.highlightedShadowOffset forKey:@"highlightedShadowOffset"];
     [coder encodeObject:self.highlightedShadowColor forKey:@"highlightedShadowColor"];
-    [coder encodeFloat:self.firstLineIndent forKey:@"firstLineIndent"];
-    [coder encodeFloat:self.leading forKey:@"leading"];
-    [coder encodeFloat:self.lineHeightMultiple forKey:@"lineHeightMultiple"];
+    [coder encodeFloat:(float)self.firstLineIndent forKey:@"firstLineIndent"];
+    [coder encodeFloat:(float)self.leading forKey:@"leading"];
+    [coder encodeFloat:(float)self.lineHeightMultiple forKey:@"lineHeightMultiple"];
     [coder encodeUIEdgeInsets:self.textInsets forKey:@"textInsets"];
     [coder encodeInteger:self.verticalAlignment forKey:@"verticalAlignment"];
     [coder encodeObject:self.truncationTokenString forKey:@"truncationTokenString"];
