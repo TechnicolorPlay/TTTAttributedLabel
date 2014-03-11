@@ -976,13 +976,18 @@ static inline CGSize CTFramesetterSuggestFrameSizeForAttributedStringWithConstra
 #endif
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             __strong __typeof(weakSelf)strongSelf = weakSelf;
-            NSArray *results = [strongSelf.dataDetector matchesInString:[(NSAttributedString *)text string] options:0 range:NSMakeRange(0, [(NSAttributedString *)text length])];
-            if ([results count] > 0) {
-                dispatch_sync(dispatch_get_main_queue(), ^{
-                    if ([[strongSelf.attributedText string] isEqualToString:[(NSAttributedString *)text string]]) {
-                        [strongSelf addLinksWithTextCheckingResults:results attributes:strongSelf.linkAttributes];
-                    }
-                });
+
+            NSDataDetector *dataDetector = strongSelf.dataDetector;
+            if (dataDetector && [dataDetector respondsToSelector:@selector(matchesInString:options:range:)]) {
+                NSArray *results = [dataDetector matchesInString:[(NSAttributedString *)text string] options:0 range:NSMakeRange(0, [(NSAttributedString *)text length])];
+                sleep(3);
+                if ([results count] > 0) {
+                    dispatch_sync(dispatch_get_main_queue(), ^{
+                        if ([[strongSelf.attributedText string] isEqualToString:[(NSAttributedString *)text string]]) {
+                            [strongSelf addLinksWithTextCheckingResults:results attributes:strongSelf.linkAttributes];
+                        }
+                    });
+                }
             }
         });
     }
