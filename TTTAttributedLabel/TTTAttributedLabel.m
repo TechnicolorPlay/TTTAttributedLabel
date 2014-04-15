@@ -1110,8 +1110,7 @@ afterInheritingLabelAttributesAndConfiguringWithBlock:(NSMutableAttributedString
 
 #pragma mark - UIResponder
 
-- (void)touchesBegan:(NSSet *)touches
-           withEvent:(UIEvent *)event
+- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
 {
     [self generateRectsForCharactersInLinks];
     
@@ -1124,8 +1123,7 @@ afterInheritingLabelAttributesAndConfiguringWithBlock:(NSMutableAttributedString
     }
 }
 
-- (void)touchesMoved:(NSSet *)touches
-           withEvent:(UIEvent *)event
+- (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
 {
     if (self.activeLink) {
         UITouch *touch = [touches anyObject];
@@ -1138,8 +1136,7 @@ afterInheritingLabelAttributesAndConfiguringWithBlock:(NSMutableAttributedString
     }
 }
 
-- (void)touchesEnded:(NSSet *)touches
-           withEvent:(UIEvent *)event
+- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
 {
     if (self.activeLink) {
         NSTextCheckingResult *result = self.activeLink;
@@ -1186,12 +1183,14 @@ afterInheritingLabelAttributesAndConfiguringWithBlock:(NSMutableAttributedString
     }
 }
 
-- (void)touchesCancelled:(NSSet *)touches
-               withEvent:(UIEvent *)event
+- (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event
 {
-    if (self.activeLink) {
+    if (self.activeLink)
+    {
         self.activeLink = nil;
-    } else {
+    }
+    else
+    {        
         [super touchesCancelled:touches withEvent:event];
     }
 }
